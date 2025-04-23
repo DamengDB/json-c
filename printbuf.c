@@ -31,6 +31,7 @@
 #include "printbuf.h"
 #include "snprintf_compat.h"
 #include "vasprintf_compat.h"
+#include "json_util.h"
 
 static int printbuf_extend(struct printbuf *p, int min_size);
 
@@ -38,14 +39,14 @@ struct printbuf *printbuf_new(void)
 {
 	struct printbuf *p;
 
-	p = (struct printbuf *)calloc(1, sizeof(struct printbuf));
+	p = (struct printbuf *)json_calloc(1, sizeof(struct printbuf));
 	if (!p)
 		return NULL;
 	p->size = 32;
 	p->bpos = 0;
-	if (!(p->buf = (char *)malloc(p->size)))
+	if (!(p->buf = (char *)json_malloc(p->size)))
 	{
-		free(p);
+		json_free(p);
 		return NULL;
 	}
 	p->buf[0] = '\0';
@@ -87,7 +88,7 @@ static int printbuf_extend(struct printbuf *p, int min_size)
 	         "bpos=%d min_size=%d old_size=%d new_size=%d\n",
 	         p->bpos, min_size, p->size, new_size);
 #endif /* PRINTBUF_DEBUG */
-	if (!(t = (char *)realloc(p->buf, new_size)))
+	if (!(t = (char *)json_realloc(p->buf, new_size)))
 		return -1;
 	p->size = new_size;
 	p->buf = t;
@@ -167,7 +168,7 @@ int sprintbuf(struct printbuf *p, const char *msg, ...)
 		}
 		va_end(ap);
 		size = printbuf_memappend(p, t, size);
-		free(t);
+		json_free(t);
 	}
 	else
 	{
@@ -186,7 +187,7 @@ void printbuf_free(struct printbuf *p)
 {
 	if (p)
 	{
-		free(p->buf);
-		free(p);
+		json_free(p->buf);
+		json_free(p);
 	}
 }

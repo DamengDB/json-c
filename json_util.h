@@ -32,6 +32,23 @@ extern "C" {
 
 #define JSON_FILE_BUF_SIZE 4096
 
+/**
+ * Global functions for memory/logging handlers.
+ */
+typedef void *(*json_mallocor)(size_t size);
+typedef void *(*json_reallocor)(void *mem, size_t size);
+typedef void (*json_freeor)(void *mem);
+
+extern json_mallocor  json_malloc_h;
+extern json_reallocor json_realloc_h;
+extern json_freeor    json_free_h;
+
+void* json_malloc(size_t size);
+void* json_realloc(void* mem, size_t size);
+void  json_free(void* mem);
+void* json_calloc(size_t Count, size_t size);
+char* json_strdup(char const* _String);
+
 /* utility functions */
 /**
  * Read the full contents of the given file, then convert it to a
@@ -123,6 +140,9 @@ JSON_EXPORT int json_parse_double(const char *buf, double *retval);
  */
 JSON_EXPORT const char *json_type_to_name(enum json_type o_type);
 
+
+JSON_EXPORT void json_set_handlers(json_mallocor allocator, json_reallocor reallocator,
+                                   json_freeor freeor);
 #ifdef __cplusplus
 }
 #endif

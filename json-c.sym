@@ -144,6 +144,7 @@ JSONC_0.14 {
     json_tokener_reset;
     json_tokener_set_flags;
     json_type_to_name;
+    json_set_handlers;
     json_util_get_last_err;
     lh_char_equal;
     lh_kchar_table_new;

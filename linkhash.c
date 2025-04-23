@@ -31,6 +31,7 @@
 
 #include "linkhash.h"
 #include "random_seed.h"
+#include "json_util.h"
 
 /* hash functions */
 static unsigned long lh_char_hash(const void *k);
@@ -502,16 +503,16 @@ struct lh_table *lh_table_new(int size, lh_entry_free_fn *free_fn, lh_hash_fn *h
 
 	/* Allocate space for elements to avoid divisions by zero. */
 	assert(size > 0);
-	t = (struct lh_table *)calloc(1, sizeof(struct lh_table));
+	t = (struct lh_table *)json_calloc(1, sizeof(struct lh_table));
 	if (!t)
 		return NULL;
 
 	t->count = 0;
 	t->size = size;
-	t->table = (struct lh_entry *)calloc(size, sizeof(struct lh_entry));
+	t->table = (struct lh_entry *)json_calloc(size, sizeof(struct lh_entry));
 	if (!t->table)
 	{
-		free(t);
+		json_free(t);
 		return NULL;
 	}
 	t->free_fn = free_fn;
@@ -553,12 +554,12 @@ int lh_table_resize(struct lh_table *t, int new_size)
 			return -1;
 		}
 	}
-	free(t->table);
+	json_free(t->table);
 	t->table = new_t->table;
 	t->size = new_size;
 	t->head = new_t->head;
 	t->tail = new_t->tail;
-	free(new_t);
+	json_free(new_t);
 
 	return 0;
 }
@@ -571,8 +572,8 @@ void lh_table_free(struct lh_table *t)
 		for (c = t->head; c != NULL; c = c->next)
 			t->free_fn(c);
 	}
-	free(t->table);
-	free(t);
+	json_free(t->table);
+	json_free(t);
 }
 
 int lh_table_insert_w_hash(struct lh_table *t, const void *k, const void *v, const unsigned long h,

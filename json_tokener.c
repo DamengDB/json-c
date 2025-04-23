@@ -154,20 +154,20 @@ struct json_tokener *json_tokener_new_ex(int depth)
 {
 	struct json_tokener *tok;
 
-	tok = (struct json_tokener *)calloc(1, sizeof(struct json_tokener));
+	tok = (struct json_tokener *)json_calloc(1, sizeof(struct json_tokener));
 	if (!tok)
 		return NULL;
-	tok->stack = (struct json_tokener_srec *)calloc(depth, sizeof(struct json_tokener_srec));
+	tok->stack = (struct json_tokener_srec *)json_calloc(depth, sizeof(struct json_tokener_srec));
 	if (!tok->stack)
 	{
-		free(tok);
+		json_free(tok);
 		return NULL;
 	}
 	tok->pb = printbuf_new();
 	if (!tok->pb)
 	{
-		free(tok->stack);
-		free(tok);
+		json_free(tok->stack);
+		json_free(tok);
 		return NULL;
 	}
 	tok->max_depth = depth;
@@ -185,8 +185,8 @@ void json_tokener_free(struct json_tokener *tok)
 	json_tokener_reset(tok);
 	if (tok->pb)
 		printbuf_free(tok->pb);
-	free(tok->stack);
-	free(tok);
+	json_free(tok->stack);
+	json_free(tok);
 }
 
 static void json_tokener_reset_level(struct json_tokener *tok, int depth)
@@ -195,7 +195,7 @@ static void json_tokener_reset_level(struct json_tokener *tok, int depth)
 	tok->stack[depth].saved_state = json_tokener_state_start;
 	json_object_put(tok->stack[depth].current);
 	tok->stack[depth].current = NULL;
-	free(tok->stack[depth].obj_field_name);
+	json_free(tok->stack[depth].obj_field_name);
 	tok->stack[depth].obj_field_name = NULL;
 }
 
@@ -357,7 +357,7 @@ struct json_object *json_tokener_parse_ex(struct json_tokener *tok, const char *
 		tmplocale = setlocale(LC_NUMERIC, NULL);
 		if (tmplocale)
 		{
-			oldlocale = strdup(tmplocale);
+			oldlocale = json_strdup(tmplocale);
 			if (oldlocale == NULL)
 				return NULL;
 		}
@@ -1201,7 +1201,7 @@ struct json_object *json_tokener_parse_ex(struct json_tokener *tok, const char *
 				{
 					printbuf_memappend_checked(tok->pb, case_start,
 					                           str - case_start);
-					obj_field_name = strdup(tok->pb->buf);
+					obj_field_name = json_strdup(tok->pb->buf);
 					if (obj_field_name == NULL)
 					{
 						tok->err = json_tokener_error_memory;
@@ -1255,7 +1255,7 @@ struct json_object *json_tokener_parse_ex(struct json_tokener *tok, const char *
 
 		case json_tokener_state_object_value_add:
 			json_object_object_add(current, obj_field_name, obj);
-			free(obj_field_name);
+			json_free(obj_field_name);
 			obj_field_name = NULL;
 			saved_state = json_tokener_state_object_sep;
 			state = json_tokener_state_eatws;
@@ -1309,7 +1309,7 @@ out:
 	freelocale(newloc);
 #elif defined(HAVE_SETLOCALE)
 	setlocale(LC_NUMERIC, oldlocale);
-	free(oldlocale);
+	json_free(oldlocale);
 #endif
 
 	if (tok->err == json_tokener_success)

@@ -7,6 +7,7 @@
  */
 
 #include "snprintf_compat.h"
+#include "json_util.h"
 
 #ifndef WIN32
 #include <stdarg.h>
@@ -45,7 +46,7 @@ static int vasprintf(char **buf, const char *fmt, va_list ap)
 		return -1;
 	}
 
-	b = (char *)malloc(sizeof(char) * ((size_t)chars + 1));
+	b = (char *)json_malloc(sizeof(char) * ((size_t)chars + 1));
 	if (!b)
 	{
 		return -1;
@@ -53,7 +54,7 @@ static int vasprintf(char **buf, const char *fmt, va_list ap)
 
 	if ((chars = vsprintf(b, fmt, ap)) < 0)
 	{
-		free(b);
+		json_free(b);
 	}
 	else
 	{

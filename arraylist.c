@@ -35,6 +35,7 @@
 #endif
 
 #include "arraylist.h"
+#include "json_util.h"
 
 struct array_list *array_list_new(array_list_free_fn *free_fn)
 {
@@ -47,15 +48,15 @@ struct array_list *array_list_new2(array_list_free_fn *free_fn, int initial_size
 
 	if (initial_size < 0 || (size_t)initial_size >= SIZE_T_MAX / sizeof(void *))
 		return NULL;
-	arr = (struct array_list *)malloc(sizeof(struct array_list));
+	arr = (struct array_list *)json_malloc(sizeof(struct array_list));
 	if (!arr)
 		return NULL;
 	arr->size = initial_size;
 	arr->length = 0;
 	arr->free_fn = free_fn;
-	if (!(arr->array = (void **)malloc(arr->size * sizeof(void *))))
+	if (!(arr->array = (void **)json_malloc(arr->size * sizeof(void *))))
 	{
-		free(arr);
+		json_free(arr);
 		return NULL;
 	}
 	return arr;
@@ -67,8 +68,8 @@ extern void array_list_free(struct array_list *arr)
 	for (i = 0; i < arr->length; i++)
 		if (arr->array[i])
 			arr->free_fn(arr->array[i]);
-	free(arr->array);
-	free(arr);
+	json_free(arr->array);
+	json_free(arr);
 }
 
 void *array_list_get_idx(struct array_list *arr, size_t i)
@@ -96,7 +97,7 @@ static int array_list_expand_internal(struct array_list *arr, size_t max)
 	}
 	if (new_size > (~((size_t)0)) / sizeof(void *))
 		return -1;
-	if (!(t = realloc(arr->array, new_size * sizeof(void *))))
+	if (!(t = json_realloc(arr->array, new_size * sizeof(void *))))
 		return -1;
 	arr->array = (void **)t;
 	arr->size = new_size;
@@ -118,7 +119,7 @@ int array_list_shrink(struct array_list *arr, size_t empty_slots)
 	if (new_size == 0)
 		new_size = 1;
 
-	if (!(t = realloc(arr->array, new_size * sizeof(void *))))
+	if (!(t = json_realloc(arr->array, new_size * sizeof(void *))))
 		return -1;
 	arr->array = (void **)t;
 	arr->size = new_size;

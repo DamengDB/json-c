@@ -20,6 +20,7 @@
 #include "json_pointer_private.h"
 #include "strdup_compat.h"
 #include "vasprintf_compat.h"
+#include "json_util.h"
 
 /* Avoid ctype.h and locale overhead */
 #define is_plain_digit(c) ((c) >= '0' && (c) <= '9')
@@ -236,7 +237,7 @@ int json_pointer_get_internal(struct json_object *obj, const char *path,
 	}
 
 	/* pass a working copy to the recursive call */
-	if (!(path_copy = strdup(path)))
+	if (!(path_copy = json_strdup(path)))
 	{
 		errno = ENOMEM;
 		return -1;
@@ -245,7 +246,7 @@ int json_pointer_get_internal(struct json_object *obj, const char *path,
 	/* re-map the path string to the const-path string */
 	if (rc == 0 && json_object_is_type(res->parent, json_type_object) && res->key_in_parent)
 		res->key_in_parent = path + (res->key_in_parent - path_copy);
-	free(path_copy);
+	json_free(path_copy);
 
 	return rc;
 }
@@ -293,7 +294,7 @@ int json_pointer_getf(struct json_object *obj, struct json_object **res, const c
 
 	rc = json_pointer_object_get_recursive(obj, path_copy, res);
 out:
-	free(path_copy);
+	json_free(path_copy);
 
 	return rc;
 }
@@ -334,14 +335,14 @@ int json_pointer_set_with_array_cb(struct json_object **obj, const char *path,
 	}
 
 	/* pass a working copy to the recursive call */
-	if (!(path_copy = strdup(path)))
+	if (!(path_copy = json_strdup(path)))
 	{
 		errno = ENOMEM;
 		return -1;
 	}
 	path_copy[endp - path] = '\0';
 	rc = json_pointer_object_get_recursive(*obj, path_copy, &set);
-	free(path_copy);
+	json_free(path_copy);
 
 	if (rc)
 		return rc;
@@ -410,6 +411,6 @@ set_single_path:
 	rc = json_pointer_set_single_path(set, endp, value,
 					  json_object_array_put_idx_cb, NULL);
 out:
-	free(path_copy);
+	json_free(path_copy);
 	return rc;
 }

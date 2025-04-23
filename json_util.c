@@ -56,6 +56,45 @@
 #include "json_util.h"
 #include "printbuf.h"
 
+/* Default allocators */
+json_mallocor  json_malloc_h  = malloc;
+json_reallocor json_realloc_h = realloc;
+json_freeor    json_free_h    = free;
+
+void *json_malloc(size_t size)
+{
+	return json_malloc_h(size);
+}
+
+void *json_realloc(void *mem, size_t size)
+{
+	return json_realloc_h(mem, size);
+}
+
+void json_free(void *mem)
+{
+	json_free_h(mem);
+}
+
+void* json_calloc(size_t Count, size_t size)
+{
+	void* p = NULL;
+	size_t final_size = 0;
+	final_size = Count * size;
+	p = json_malloc(final_size);
+	return p;
+}
+
+char* json_strdup(char const* _String)
+{
+	void* p = NULL;
+	size_t str_len;
+	str_len = strlen(_String);
+	p = json_malloc(str_len + 1);
+	strcpy(p, _String);
+	return p;
+}
+
 static int _json_object_to_fd(int fd, struct json_object *obj, int flags, const char *filename);
 
 static char _last_err[256] = "";
@@ -283,8 +322,8 @@ void *rpl_realloc(void *p, size_t n)
 	if (n == 0)
 		n = 1;
 	if (p == 0)
-		return malloc(n);
-	return realloc(p, n);
+		return json_malloc(n);
+	return json_realloc(p, n);
 }
 #endif
 
@@ -313,3 +352,20 @@ const char *json_type_to_name(enum json_type o_type)
 	}
 	return json_type_name[o_type];
 }
+
+/**
+ * This function is called by programs which want to set up custom handling
+ * for memory management and error reporting
+ *
+ * Only non-NULL values change their respective handler
+ */
+void json_set_handlers(json_mallocor allocator, json_reallocor reallocator, json_freeor freeor)
+{
+	if (allocator)
+		json_malloc_h = allocator;
+	if (reallocator)
+		json_realloc_h = reallocator;
+	if (freeor)
+	    json_free_h = freeor;
+}
+
